@@ -10,7 +10,10 @@ func getData(w http.ResponseWriter, req *http.Request) {
 }
 
 func main() {
+  http.Handle("/", http.FileServer(http.Dir("./static")))
   http.HandleFunc("/data", getData)
 
   http.ListenAndServe(":8080", nil)
+
+  
 }
