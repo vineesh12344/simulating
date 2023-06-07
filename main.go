@@ -5,7 +5,7 @@ import (
 	"fmt"
   "log"
 	"net/http"
-	// "os"
+	"os"
 )
 
 func getDrivers(w http.ResponseWriter, req *http.Request) {
@@ -41,19 +41,19 @@ func main() {
 	http.Handle("/", http.FileServer(http.Dir("./static")))
 	http.HandleFunc("/drivers", getDrivers)
 
-	// serverEnv := os.Getenv("SERVER_ENV")
+	serverEnv := os.Getenv("SERVER_ENV")
 
   fmt.Printf("Starting server at port 8080\n")
   if err := http.ListenAndServe(":8080", nil); err != nil {
       log.Fatal(err)
   }
-	// if serverEnv == "DEV" {
-  //   fmt.Printf("Starting server at port 8080\n")
-  //   if err := http.ListenAndServe(":8080", nil); err != nil {
-  //       log.Fatal(err)
-  //   }
+	if serverEnv == "DEV" {
+    fmt.Printf("Starting server at port 8080\n")
+    if err := http.ListenAndServe(":8080", nil); err != nil {
+        log.Fatal(err)
+    }
 		
-	// } else if serverEnv == "PROD" {
-	// 	fmt.Printf("Not implemented")
-	// }
+	} else if serverEnv == "PROD" {
+		fmt.Printf("Not implemented")
+	}
 }
