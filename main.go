@@ -10,6 +10,8 @@ func getData(w http.ResponseWriter, req *http.Request) {
 }
 
 func main() {
+  fmt.Printf("Started server at port 8080\n")
+
   http.Handle("/", http.FileServer(http.Dir("./static")))
   http.HandleFunc("/data", getData)
 
