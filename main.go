@@ -38,7 +38,7 @@ func main() {
 	db.InitDB()
 	defer db.Connection.Close()
 
-	http.Handle("/", http.FileServer(http.Dir("./static")))
+	http.Handle("/", http.FileServer(http.Dir("./frontend/build")))
 	http.HandleFunc("/drivers", getDrivers)
 
 	serverEnv := os.Getenv("SERVER_ENV")

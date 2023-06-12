@@ -1,4 +1,4 @@
-const obstacles = [
+exports.obstacles = [
     // Parks
     [19,23,4,10,'#70A288'],
     [33,34,24,30,'#70A288'],

@@ -5,7 +5,7 @@ WORKDIR /app
 COPY go.mod ./
 COPY go.sum ./
 COPY *.go ./
-COPY static ./static
+COPY frontend ./frontend
 COPY postgres ./postgres
 
 RUN go build -o /main
