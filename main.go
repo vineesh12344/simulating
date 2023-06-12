@@ -44,11 +44,15 @@ func main() {
 	serverEnv := os.Getenv("SERVER_ENV")
 
   fmt.Printf("Starting server at port 8080\n")
+  fmt.Printf("http://localhost:8080\n")
   if err := http.ListenAndServe(":8080", nil); err != nil {
       log.Fatal(err)
   }
 	if serverEnv == "DEV" {
     fmt.Printf("Starting server at port 8080\n")
+	// url that is served
+	fmt.Printf("http://localhost:8080\n")
+
     if err := http.ListenAndServe(":8080", nil); err != nil {
         log.Fatal(err)
     }
