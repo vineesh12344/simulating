@@ -1,9 +1,9 @@
 package main
 
 import (
-	db "app/postgres"
+	db "app/db"
 	"fmt"
-  "log"
+    "log"
 	"net/http"
 	"os"
 )
@@ -38,24 +38,24 @@ func main() {
 	db.InitDB()
 	defer db.Connection.Close()
 
-	http.Handle("/", http.FileServer(http.Dir("./frontend/build")))
+	http.Handle("/", http.FileServer(http.Dir("../frontend/build")))
 	http.HandleFunc("/drivers", getDrivers)
 
 	serverEnv := os.Getenv("SERVER_ENV")
 
-  fmt.Printf("Starting server at port 8080\n")
-  fmt.Printf("http://localhost:8080\n")
-  if err := http.ListenAndServe(":8080", nil); err != nil {
-      log.Fatal(err)
-  }
+	fmt.Printf("Starting server at port 8080\n")
+	fmt.Printf("http://localhost:8080\n")
+	if err := http.ListenAndServe(":8080", nil); err != nil {
+		log.Fatal(err)
+	}
 	if serverEnv == "DEV" {
-    fmt.Printf("Starting server at port 8080\n")
+	fmt.Printf("Starting server at port 8080\n")
 	// url that is served
 	fmt.Printf("http://localhost:8080\n")
 
-    if err := http.ListenAndServe(":8080", nil); err != nil {
-        log.Fatal(err)
-    }
+	if err := http.ListenAndServe(":8080", nil); err != nil {
+		log.Fatal(err)
+	}
 		
 	} else if serverEnv == "PROD" {
 		fmt.Printf("Not implemented")

@@ -4,12 +4,13 @@ WORKDIR /app
 
 COPY go.mod ./
 COPY go.sum ./
-COPY *.go ./
-COPY frontend ./frontend
-COPY postgres ./postgres
 
-RUN go build -o /main
+COPY frontend ./frontend
+COPY db ./db
+COPY server ./server
+
+RUN cd server && go build -o /main
 
 EXPOSE 8080
 
-CMD [ "/main" ]
+CMD cd server && /main
