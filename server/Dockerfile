@@ -8,7 +8,7 @@ COPY go.sum ./
 COPY frontend ./frontend
 COPY db ./db
 COPY server ./server
-COPY dbconfig.json .
+COPY dbconfig.json ./
 
 RUN cd server && go build -o /main
 
