@@ -23,6 +23,7 @@ type Config struct {
 
 // initDB creates a new instance of DB
 func InitDB() {
+  fmt.Println("Initializing DB...")
 	configFile, err := os.Open("../dbconfig.json")
 	if err != nil {
 		log.Fatal("Error opening dbconfig.json:", err)
@@ -43,6 +44,8 @@ func InitDB() {
 	var connErr error
 	Connection, connErr = sql.Open("postgres", connStr)
 	if connErr != nil {
+    fmt.Printf("Error opening db connection: %s", connErr)
 		log.Fatal(connErr)
 	}
+  fmt.Println("DB initialized.")
 }

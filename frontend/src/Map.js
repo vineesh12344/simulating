@@ -1,17 +1,18 @@
 import React from 'react';
 import Car from './Car';
-import records from './records';
-import { wait } from './utils';
+// import obstacles from './obstacles';
+import { api, wait } from './utils';
 
 import config from './config';
+
+const obstacles = require('./obstacles.js').obstacles;
 const {
   gridSize,
   squareSize,
   fetchInterval,
 } = config;
 
-const obstacles = require("./obstacles").obstacles
-const coordsToObstacles = [];
+const coordsToObstacles = {};
 obstacles.forEach(([xStart, xEnd, yStart, yEnd, color]) => {
   let x = xStart;
   while (x <= xEnd) {
@@ -27,20 +28,80 @@ obstacles.forEach(([xStart, xEnd, yStart, yEnd, color]) => {
 export default class Map extends React.Component {
   constructor(props) {
     super(props);
+
+    this.previousUpdateAt = Date.now();
     this.state = {
       cars: [],
+      refreshing: false,
     };
   }
 
-  async simulate() {
-    for (const record of records) {
-      this.setState({ cars: [record] });
+  async loadData() {
+    while (true) {
+      const rides = await api.get('/rides');
+
+      const timeout = 2000;
+      const now = Date.now();
+      if ((now - this.previousUpdateAt) > timeout) {
+        this.previousUpdateAt = now;
+        this.setState({ cars: [], refreshing: true });
+        await wait(fetchInterval);
+        continue;
+      }
+
+      this.previousUpdateAt = now;
+
+      const cars = [];
+      for (const ride of rides) {
+        const { car_id, location } = ride;
+        const path = JSON.parse(ride.path);
+        const [x, y] = location.split(':');
+        cars.push({
+          id: car_id,
+          path: path,
+          actual: [parseInt(x), parseInt(y)],
+        });
+      }
+
+      this.setState({ cars, refreshing: false });
       await wait(fetchInterval);
     }
   }
 
+  // loadData() {
+  //   while (true) {
+  //     const rides = api.get('/rides');
+
+  //     const timeout = 2000;
+  //     const now = Date.now();
+  //     if ((now - this.previousUpdateAt) > timeout) {
+  //       this.previousUpdateAt = now;
+  //       this.setState({ cars: [], refreshing: true });
+  //       wait(fetchInterval);
+  //       continue;
+  //     }
+
+  //     this.previousUpdateAt = now;
+
+  //     const cars = [];
+  //     for (const ride of rides) {
+  //       const { car_id, location } = ride;
+  //       const path = JSON.parse(ride.path);
+  //       const [x, y] = location.split(':');
+  //       cars.push({
+  //         id: car_id,
+  //         path: path,
+  //         actual: [parseInt(x), parseInt(y)],
+  //       });
+  //     }
+
+  //     this.setState({ cars, refreshing: false });
+  //     wait(fetchInterval);
+  //   }
+  // }
+
   componentDidMount() {
-    this.simulate();
+    this.loadData();
   }
 
   render() {
@@ -56,23 +117,43 @@ export default class Map extends React.Component {
           y={y * squareSize}
           fill={color}
           stroke={color}
+          onClick={() => console.log(`${x}:${y}`)}
         />
       );
     }
 
-    const cars = this.state.cars.map(({ id, next, rotation, path }) => {
-      return <Car key={id} next={next} rotation={rotation || 0} path={path} />;
+    const cars = this.state.cars.map(({ id, actual, rotation, path }) => {
+      return <Car key={id} actual={actual} rotation={rotation || 0} path={path} />;
+    });
+
+    const actualsColors = {car1: '#10b981', car2: '#6366f1', car3: '#f43f5e'};
+    const actuals = this.state.cars.map(({ id, actual }) => {
+      return (
+        <circle
+          key={`${actual[0]}:${actual[1]}`}
+          r={squareSize / 2}
+          cx={actual[0] * squareSize + (squareSize / 2)}
+          cy={actual[1] * squareSize + (squareSize / 2)}
+          fill={actualsColors[id]}
+        />
+      );
     });
 
     return (
-      <svg
-      width={gridSize}
-      height={gridSize}
-      className="map"
-      >
-        {obstacleElems}
-        {cars}
-      </svg>
+      <div className="map">
+        <div className="map-inner">
+          <div className={`map-refresh ${this.state.refreshing ? 'active' : ''}`} />
+          <svg
+          width={gridSize}
+          height={gridSize}
+          className="map"
+          >
+            {obstacleElems}
+            {actuals}
+            {cars}
+          </svg>
+        </div>
+      </div>
     );
   }
 }

@@ -15,18 +15,28 @@ const {
   fetchInterval,
   refreshInterval,
   turnDuration,
+  animationOverhead,
 } = config;
 
 export default class Car extends React.Component {
   constructor(props) {
     super(props);
-    const { path } = props;
+    const { path, actual } = props;
 
+    let pathIndex = path.findIndex(([x, y]) => {
+      return x === actual[0] && y === actual[1];
+    });
+    if (pathIndex === 0) pathIndex = 1;
+
+    const rotation = getRotation(path, pathIndex);
+
+    this.latestUpdateAt = 0;
     this.rotateBusy = false;
+    this.moveBusy = false;
     this.state = {
-      position: props.next,
-      rotation: getRotation(path, 1),
-      path: props.path,
+      position: actual,
+      rotation,
+      path,
     };
   }
 
@@ -58,21 +68,29 @@ export default class Car extends React.Component {
     this.rotateBusy = false;
   }
 
-  async move(next) {
-    if (next !== this.props.next) return;
-    const { path, position } = this.state;
+  async move(actual, path, receivedAt) {
+    while (this.moveBusy) {
+      await wait(100);
+      if (receivedAt !== this.latestUpdateAt) return;
+    }
+
+    this.moveBusy = true;
+    
+    const { position } = this.state;
     let [currX, currY] = position;
   
     const startIndex = getNextCoordIndex(currX, currY, path);
     const endIndex = path.findIndex(([x, y]) => {
-      return x === next[0] && y === next[1];
+      return x === actual[0] && y === actual[1];
     });
+
     const section = path.slice(startIndex, endIndex + 1);
+    if (section.length < 2) return this.moveBusy = false;
     const turnCount = countTurns(section);
     const turnsDuration = turnCount * turnDuration;
 
     const distance = endIndex - startIndex + Math.max(currX % 1, currY % 1);
-    const steps = (fetchInterval - turnsDuration) / refreshInterval;
+    const steps = (fetchInterval - turnsDuration - animationOverhead) / refreshInterval;
     const increment = distance / steps;
   
     for (let i = 0; i < section.length; i++) {
@@ -85,26 +103,27 @@ export default class Car extends React.Component {
 
       const [nextX, nextY] = section[i];
       while (currX !== nextX) {
-        if (next !== this.props.next) return;
-
         currX = advanceCoord(currX, nextX, increment);
-        this.setState({ position: [currX, this.state.position[1]] });
+        this.setState({ position: [currX, this.state.position[1]], path });
         await wait(refreshInterval);
       }
 
       while (currY !== nextY) {
-        if (next !== this.props.next) return;
-
         currY = advanceCoord(currY, nextY, increment);
-        this.setState({ position: [this.state.position[0], currY] });
+        this.setState({ position: [this.state.position[0], currY], path });
         await wait(refreshInterval);
       }
     }
+
+    this.moveBusy = false;
   }
 
   componentDidUpdate(prevProps) {
-    if (prevProps.next === this.props.next) return;
-    this.move(this.props.next);
+    if (prevProps.actual === this.props.actual) return;
+
+    const receivedAt = Date.now();
+    this.latestUpdateAt = receivedAt;
+    this.move(this.props.actual, this.props.path, receivedAt);
   }
 
   render() {

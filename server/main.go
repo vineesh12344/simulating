@@ -17,8 +17,12 @@ type Ride struct {
 }
 
 func getRides(w http.ResponseWriter, req *http.Request) {
+	//set cors for specific origin
+	w.Header().Set("Access-Control-Allow-Origin", "http://localhost:3000")	
+
 	rows, err := db.Connection.Query("SELECT * FROM rides")
 	if err != nil {
+		//fmt.Println(rows)
 		http.Error(w, "Failed to get rides: "+err.Error(), http.StatusInternalServerError)
 		return
 	}
@@ -46,7 +50,8 @@ func main() {
 	http.HandleFunc("/rides", getRides)
 
 	//app served at
-	fmt.Printf("http://localhost:8080")
+	fmt.Println("http://localhost:8080")
+	log.Fatal(http.ListenAndServe(":8080", nil))
 
 	serverEnv := os.Getenv("SERVER_ENV")
 
