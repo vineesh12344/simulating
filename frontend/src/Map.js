@@ -1,17 +1,18 @@
 import React from 'react';
 import Car from './Car';
-// import obstacles from './obstacles';
-import { api, wait } from './utils';
+import obstacles from './obstacles';
+import { api } from './api';
+import { wait } from './utils';
 
 import config from './config';
-
-const obstacles = require('./obstacles.js').obstacles;
+import CustomerIcon from './CustomerIcon';
 const {
   gridSize,
   squareSize,
   fetchInterval,
 } = config;
 
+obstacles = obstacles.obstacles;
 const coordsToObstacles = {};
 obstacles.forEach(([xStart, xEnd, yStart, yEnd, color]) => {
   let x = xStart;
@@ -25,6 +26,30 @@ obstacles.forEach(([xStart, xEnd, yStart, yEnd, color]) => {
   }
 });
 
+const pathCoords = [];
+const roadRects = [];
+for (let x = 0; x < 50; x++) {
+  for (let y = 0; y < 50; y++) {
+    if (!coordsToObstacles[`${x}:${y}`]) {
+      roadRects.push(
+        <rect
+          key={`${x}:${y}`}
+          width={squareSize}
+          height={squareSize}
+          x={x * squareSize}
+          y={y * squareSize}
+          fill="white"
+          onClick={() => {
+            pathCoords.push([x, y]);
+            console.log(JSON.stringify(pathCoords));
+          }}
+        />
+      );
+    }
+  }
+}
+
+
 export default class Map extends React.Component {
   constructor(props) {
     super(props);
@@ -32,6 +57,7 @@ export default class Map extends React.Component {
     this.previousUpdateAt = Date.now();
     this.state = {
       cars: [],
+      customers: [],
       refreshing: false,
     };
   }
@@ -68,40 +94,17 @@ export default class Map extends React.Component {
     }
   }
 
-  // loadData() {
-  //   while (true) {
-  //     const rides = api.get('/rides');
-
-  //     const timeout = 2000;
-  //     const now = Date.now();
-  //     if ((now - this.previousUpdateAt) > timeout) {
-  //       this.previousUpdateAt = now;
-  //       this.setState({ cars: [], refreshing: true });
-  //       wait(fetchInterval);
-  //       continue;
-  //     }
-
-  //     this.previousUpdateAt = now;
-
-  //     const cars = [];
-  //     for (const ride of rides) {
-  //       const { car_id, location } = ride;
-  //       const path = JSON.parse(ride.path);
-  //       const [x, y] = location.split(':');
-  //       cars.push({
-  //         id: car_id,
-  //         path: path,
-  //         actual: [parseInt(x), parseInt(y)],
-  //       });
-  //     }
-
-  //     this.setState({ cars, refreshing: false });
-  //     wait(fetchInterval);
-  //   }
-  // }
+  async loadCustomers() {
+    while (true) {
+      const customers = await api.get('/customers');
+      this.setState({ customers });
+      await wait(fetchInterval);
+    }
+  }
 
   componentDidMount() {
     this.loadData();
+    this.loadCustomers();
   }
 
   render() {
@@ -126,15 +129,15 @@ export default class Map extends React.Component {
       return <Car key={id} actual={actual} rotation={rotation || 0} path={path} />;
     });
 
-    const actualsColors = {car1: '#10b981', car2: '#6366f1', car3: '#f43f5e'};
-    const actuals = this.state.cars.map(({ id, actual }) => {
+    const customers = this.state.customers.map(({ id, name, location }) => {
+      const [x, y] = location.split(':');
       return (
-        <circle
-          key={`${actual[0]}:${actual[1]}`}
-          r={squareSize / 2}
-          cx={actual[0] * squareSize + (squareSize / 2)}
-          cy={actual[1] * squareSize + (squareSize / 2)}
-          fill={actualsColors[id]}
+        <CustomerIcon
+          key={`${x}:${y}`}
+          x={x * squareSize - (squareSize / 2)}
+          y={y * squareSize - (squareSize / 2)}
+          id = {id}
+          name={name}
         />
       );
     });
@@ -148,9 +151,10 @@ export default class Map extends React.Component {
           height={gridSize}
           className="map"
           >
+            {roadRects}
             {obstacleElems}
-            {actuals}
             {cars}
+            {customers}
           </svg>
         </div>
       </div>
