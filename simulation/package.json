@@ -2,15 +2,15 @@
   "name": "simulation",
   "version": "1.0.0",
   "main": "main.js",
-  "type":"module",
+  "type": "module",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "author": "",
   "license": "ISC",
   "dependencies": {
+    "md5": "^2.3.0",
     "pg": "^8.9.0"
   },
-  "devDependencies": {},
   "description": ""
 }

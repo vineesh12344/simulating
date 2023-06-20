@@ -131,6 +131,7 @@ export default class Map extends React.Component {
 
     const customers = this.state.customers.map(({ id, name, location }) => {
       const [x, y] = location.split(':');
+      console.log(x, y);
       return (
         <CustomerIcon
           key={`${x}:${y}`}

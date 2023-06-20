@@ -3,10 +3,10 @@ package main
 import (
 	db "app/db"
 	"encoding/json"
+	"fmt"
 	"log"
 	"net/http"
 	"os"
-	"fmt"
 )
 
 type Ride struct {
@@ -17,14 +17,15 @@ type Ride struct {
 }
 
 type Customer struct {
-	Id       string `json:"id"`
-	Name     string `json:"name"`
-	Active   bool   `json:"active"`
-	Location string `json:"location"`
+	Id          string `json:"id"`
+	Name        string `json:"name"`
+	Active      bool   `json:"active"`
+	Location    string `json:"location"`
+	Destination string `json:"destination"`
 }
 
 func getRides(w http.ResponseWriter, req *http.Request) {
-	//set cors for specific origin
+	// set cors for localhost:3000
 	w.Header().Set("Access-Control-Allow-Origin", "http://localhost:3000")
 
 	rows, err := db.Connection.Query("SELECT * FROM rides")
@@ -49,7 +50,7 @@ func getRides(w http.ResponseWriter, req *http.Request) {
 }
 
 func getCustomers(w http.ResponseWriter, req *http.Request) {
-	//set cors for specific origin
+	// set cors for localhost:3000
 	w.Header().Set("Access-Control-Allow-Origin", "http://localhost:3000")
 
 	rows, err := db.Connection.Query("SELECT * FROM customers where active = true")
@@ -63,7 +64,13 @@ func getCustomers(w http.ResponseWriter, req *http.Request) {
 
 	for rows.Next() {
 		var customer Customer
-		rows.Scan(&customer.Id, &customer.Name, &customer.Active, &customer.Location)
+		rows.Scan(
+			&customer.Id,
+			&customer.Name,
+			&customer.Active,
+			&customer.Location,
+			&customer.Destination,
+		)
 		customers = append(customers, customer)
 	}
 
@@ -73,7 +80,6 @@ func getCustomers(w http.ResponseWriter, req *http.Request) {
 	w.Write(ridesBytes)
 }
 
-
 func main() {
 	db.InitDB()
 	defer db.Connection.Close()
@@ -82,15 +88,12 @@ func main() {
 	http.HandleFunc("/rides", getRides)
 	http.HandleFunc("/customers", getCustomers)
 
-	fmt.Println("http://localhost:8080")
-	log.Fatal(http.ListenAndServe(":8080", nil))
-
 	serverEnv := os.Getenv("SERVER_ENV")
 
 	if serverEnv == "DEV" {
 		log.Fatal(http.ListenAndServe(":8080", nil))
 	} else if serverEnv == "PROD" {
-		// not implemented
-		fmt.Println("PROD server not implemented yet.")
+		// Not implemented yet
+		fmt.Println("Not implemented yet")
 	}
 }
