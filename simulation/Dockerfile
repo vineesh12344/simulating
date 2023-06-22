@@ -3,8 +3,8 @@ FROM node:19-alpine
 WORKDIR /app
 
 COPY dbconfig.json .
-COPY _config ./_config
+COPY shared ./shared
 COPY simulation ./simulation
-RUN cd simulation && npm install
+RUN cd simulation && npm install && npm run build
 
-CMD cd simulation && node main.js
+CMD cd simulation && cd dist && node index.js

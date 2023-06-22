@@ -58,10 +58,10 @@ export const getRotation = (path, i) => {
     const [x1, y1] = path[i];
     const direction = x1 !== x0 ? 'x' : 'y';
 
-    if (direction === 'x' && x1 > x0) return 0;
-    else if (direction === 'x' && x0 > x1) return 180;
-    else if (direction === 'y' && y1 > y0) return 90;
-    else return 270;
+    if (direction === 'x' && x1 > x0) return 90;
+    else if (direction === 'x' && x0 > x1) return 270;
+    else if (direction === 'y' && y1 > y0) return 180;
+    else return 0;
 };
 
 export const getTurnDistance = (curr, target) => ({

@@ -1,3 +1,5 @@
+import * as React from 'react';
+
 const shapes = `
   <g id="SVGRepo_bgCarrier" stroke-width="0" transform="translate(4.199999999999999,4.199999999999999), scale(0.85)">
   <rect x="0" y="0" width="56.00" height="56.00" rx="28" fill="#ffffff" strokewidth="0"/>
@@ -8,7 +10,18 @@ const shapes = `
   </g>
 `;
 
-const CustomerIcon = ({ x, y }) => (
-  <svg style={{ position: 'relative', zIndex: 1 }} x={x} y={y} fill="#000000" width="20px" height="20px" viewBox="0 0 56.00 56.00" xmlns="http://www.w3.org/2000/svg" transform="matrix(1, 0, 0, 1, 0, 0)" dangerouslySetInnerHTML={{ __html: shapes }} />
+const CustomerIcon = ({ x, y }: { x: number; y: number }) => (
+  <svg
+    style={{ position: 'relative', zIndex: 1 }}
+    x={x}
+    y={y}
+    fill="#000000"
+    width="20px"
+    height="20px"
+    viewBox="0 0 56.00 56.00"
+    xmlns="http://www.w3.org/2000/svg"
+    transform="matrix(1, 0, 0, 1, 0, 0)"
+    dangerouslySetInnerHTML={{ __html: shapes }}
+  />
 );
 export default CustomerIcon;

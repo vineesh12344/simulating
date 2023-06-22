@@ -1,14 +1,18 @@
 import dbInit from './dbInit.js';
 import paths from './paths.js';
-import { getRoadNodes, wait, getRandomInt, decide } from './utils.js';
-const db = dbInit();
-import { fork } from 'child_process';
+import { wait, getRandomInt, decide } from '../../shared/utils.js';
+import { getRoadNodes } from './methods.js';
+import { fork, ChildProcess } from 'child_process';
+import config from '../../shared/config.js';
+import { CoordPair } from './types.js';
+const { gridCount } = config;
 
-const getDestination = fork('getDestination.js');
+let db;
 
-const roadNodes = getRoadNodes().filter(coord => {
-  const [x, y] = coord.split(':');
-  return (x !== '0' && x !== '49' && y !== '0' && y !== '49'); // exclude edge coords for now
+const getDestination: ChildProcess = fork('getDestination.js');
+
+const roadNodes: CoordPair[] = getRoadNodes().filter(([x, y]: CoordPair) => {
+  return x !== 0 && x !== gridCount - 1 && y !== 0 && y !== gridCount - 1;
 });
 
 const simulateCars = () => {
@@ -18,15 +22,18 @@ const simulateCars = () => {
       const path = pathObj[selected];
       const [x, y] = path[i];
 
-      const res = await db.query(
+      db.query(
         `
         INSERT INTO rides (car_id, location, path)
-        VALUES ('${carId}', '${x}:${y}', '${JSON.stringify(path)}')
+        VALUES (
+          '${carId}',
+          '${x}:${y}',
+          '${JSON.stringify(path)}'
+        )
         ON CONFLICT (car_id)
         DO UPDATE SET location = EXCLUDED.location, path = EXCLUDED.path;
         `
       );
-      if (!res.rowCount || res.rowCount !== 1) console.error(res);
 
       if (i === path.length - 1) {
         pathObj.selected = selected === 'first' ? 'second' : 'first';
@@ -37,7 +44,7 @@ const simulateCars = () => {
       }
 
       await wait(200);
-    }    
+    }
   };
 
   for (const pathObj of paths) {
@@ -46,23 +53,29 @@ const simulateCars = () => {
 };
 
 class Customer {
-  constructor({ name }) {
-    this.refreshInterval = 500;
-    this.name = name;
-    this.active = false;
-    this.location = null;
-    this.destination = null;
+  private refreshInterval = 500;
+  private name: string;
+  private active = false;
+  private location: CoordPair | null = null;
+  private destination: CoordPair | null = null;
 
+  constructor({ name }: { name: string }) {
+    this.name = name;
     this.handleDestinationResult = this.handleDestinationResult.bind(this);
 
     this.simulate();
   }
 
-  updateDB() {
+  private async updateDB(): Promise<void> {
     return db.query(
       `
       INSERT INTO customers (name, active, location, destination)
-      VALUES ('${this.name}', ${this.active}, '${this.location}', '${this.destination}')
+      VALUES (
+        '${this.name}',
+        ${this.active},
+        '${this.location && `${this.location[0]}:${this.location[1]}`}',
+        '${this.destination && `${this.destination[0]}:${this.destination[1]}`}'
+      )
       ON CONFLICT (name)
       DO UPDATE SET 
       name = EXCLUDED.name,
@@ -73,7 +86,7 @@ class Customer {
     );
   }
 
-  async simulate() {
+  private async simulate(): Promise<void> {
     while (true) {
       // Active and waiting for the destination
       if (this.active && !this.destination) {
@@ -82,7 +95,7 @@ class Customer {
       }
 
       // Decide on the new active status
-      let newActive;
+      let newActive: boolean;
       if (this.active) newActive = decide(95);
       else newActive = decide(5);
 
@@ -96,7 +109,7 @@ class Customer {
 
           getDestination.send({
             name: this.name,
-            input: `${Date.now()}`,
+            location,
           });
         } else {
           this.active = false;
@@ -110,16 +123,16 @@ class Customer {
     }
   }
 
-  handleDestinationResult(destination) {
+  public handleDestinationResult(destination: CoordPair): void {
     this.destination = destination;
     this.updateDB();
   }
 }
 
 const main = async () => {
-  await wait (5000);
+  db = await dbInit();
 
-  // Simulate cards
+  // Simulate cars
   simulateCars();
 
   // Simulate customers
@@ -128,8 +141,11 @@ const main = async () => {
     customers[name] = new Customer({ name });
   });
 
-  getDestination.on('message', ({ name, destination }) => {
-    customers[name].handleDestinationResult(destination);
-  });
+  getDestination.on(
+    'message',
+    ({ name, destination }: { name: string; destination: CoordPair }) => {
+      customers[name].handleDestinationResult(destination);
+    }
+  );
 };
 main();
