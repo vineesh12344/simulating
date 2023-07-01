@@ -1,11 +1,9 @@
-const baseUrl = (
-    'http://localhost:8080'
-);
+const baseUrl: string = 'http://localhost:8080'
+
 export const api: { [key: string]: any } = {};
 
-api.get = async endpoint => {
-    const res = await fetch(`${baseUrl}${endpoint}`);
-    console.log(res);
-    if (res.json) return await res.json() || [];
-    return res;
+api.get = async (endpoint: string): Promise<any> => {
+  const res = await fetch(`${baseUrl}${endpoint}`);
+  if (res.json) return (await res.json()) || [];
+  return res;
 };
