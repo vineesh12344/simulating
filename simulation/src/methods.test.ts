@@ -1,69 +1,69 @@
 import {
-    buildGraph,
-    getDestinationRange,
-    generateDestination,
-    getClosestRoadNode,
-  } from './methods.js';
-  import config from '../../shared/config.js';
-  import { Graph } from './types.js';
-  
-  const { gridCount } = config;
-  
-  test('return a graph represented as n x n matrix', () => {
-    let gridCount = 3;
-    let obstaclesSet = new Set(['0:0', '1:1', '2:2']);
-  
-    let expected = [
-      [0, 1, 1],
-      [1, 0, 1],
-      [1, 1, 0],
-    ];
-    expect(buildGraph(obstaclesSet, gridCount)).toEqual(expected);
-  
-    gridCount = 6;
-    obstaclesSet = new Set(['0:2', '0:3', '1:2', '1:3', '5:5', '4:5']);
-  
-    expected = [
-      [1, 1, 1, 1, 1, 1],
-      [1, 1, 1, 1, 1, 1],
-      [0, 0, 1, 1, 1, 1],
-      [0, 0, 1, 1, 1, 1],
-      [1, 1, 1, 1, 1, 1],
-      [1, 1, 1, 1, 0, 0],
-    ];
-    expect(buildGraph(obstaclesSet, gridCount)).toEqual(expected);
-  });
-  
-  test('return a range of possible destinations for a starting coordinate', () => {
-    expect(getDestinationRange(0)).toEqual([50, 100]);
-    expect(getDestinationRange(49)).toEqual([74, 100]);
-    expect(getDestinationRange(50)).toEqual([0, 25]);
-    expect(getDestinationRange(99)).toEqual([0, 50]);
-  });
-  
-  test('return destination coordinates', () => {
-    let [destX, destY] = generateDestination([0, 0]);
-    expect(destX).toBeGreaterThanOrEqual(gridCount / 2);
-    expect(destX).toBeLessThanOrEqual(gridCount);
-    expect(destY).toBeGreaterThanOrEqual(gridCount / 2);
-    expect(destY).toBeLessThanOrEqual(gridCount);
-  
-    [destX, destY] = generateDestination([50, 50]);
-  
-    expect(destX).toBeGreaterThanOrEqual(0);
-    expect(destX).toBeLessThanOrEqual(25);
-    expect(destY).toBeGreaterThanOrEqual(0);
-    expect(destY).toBeLessThanOrEqual(25);
-  });
-  
-  test('returns the closest road node (can be the node itself)', () => {
-    let graph: Graph = [
-      [0, 1, 1],
-      [1, 0, 1],
-      [1, 1, 0],
-    ];
-    expect(getClosestRoadNode(0, 0, graph)).toEqual([1, 0]);
-    expect(getClosestRoadNode(0, 1, graph)).toEqual([0, 1]);
-    expect(getClosestRoadNode(0, 2, graph)).toEqual([0, 2]);
-    expect(getClosestRoadNode(2, 2, graph)).toEqual([2, 1]);
-  });
+  buildGraph,
+  getDestinationRange,
+  generateDestination,
+  getClosestRoadNode,
+} from './methods.js';
+import config from '../../shared/config.js';
+import { Graph } from './types.js';
+
+const { gridCount } = config;
+
+test('return a graph represented as n x n matrix', () => {
+  let gridCount = 3;
+  let obstaclesSet = new Set(['0:0', '1:1', '2:2']);
+
+  let expected = [
+    [0, 1, 1],
+    [1, 0, 1],
+    [1, 1, 0],
+  ];
+  expect(buildGraph(obstaclesSet, gridCount)).toEqual(expected);
+
+  gridCount = 6;
+  obstaclesSet = new Set(['0:2', '0:3', '1:2', '1:3', '5:5', '4:5']);
+
+  expected = [
+    [1, 1, 1, 1, 1, 1],
+    [1, 1, 1, 1, 1, 1],
+    [0, 0, 1, 1, 1, 1],
+    [0, 0, 1, 1, 1, 1],
+    [1, 1, 1, 1, 1, 1],
+    [1, 1, 1, 1, 0, 0],
+  ];
+  expect(buildGraph(obstaclesSet, gridCount)).toEqual(expected);
+});
+
+test('return a range of possible destinations for a starting coordinate', () => {
+  expect(getDestinationRange(0)).toEqual([50, 100]);
+  expect(getDestinationRange(49)).toEqual([74, 100]);
+  expect(getDestinationRange(50)).toEqual([0, 25]);
+  expect(getDestinationRange(99)).toEqual([0, 50]);
+});
+
+test('return destination coordinates', () => {
+  let [destX, destY] = generateDestination([0, 0]);
+  expect(destX).toBeGreaterThanOrEqual(gridCount / 2);
+  expect(destX).toBeLessThanOrEqual(gridCount);
+  expect(destY).toBeGreaterThanOrEqual(gridCount / 2);
+  expect(destY).toBeLessThanOrEqual(gridCount);
+
+  [destX, destY] = generateDestination([50, 50]);
+
+  expect(destX).toBeGreaterThanOrEqual(0);
+  expect(destX).toBeLessThanOrEqual(25);
+  expect(destY).toBeGreaterThanOrEqual(0);
+  expect(destY).toBeLessThanOrEqual(25);
+});
+
+test('returns the closest road node (can be the node itself)', () => {
+  let graph: Graph = [
+    [0, 1, 1],
+    [1, 0, 1],
+    [1, 1, 0],
+  ];
+  expect(getClosestRoadNode(0, 0, graph)).toEqual([1, 0]);
+  expect(getClosestRoadNode(0, 1, graph)).toEqual([0, 1]);
+  expect(getClosestRoadNode(0, 2, graph)).toEqual([0, 2]);
+  expect(getClosestRoadNode(2, 2, graph)).toEqual([2, 1]);
+});
