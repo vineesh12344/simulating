@@ -1,7 +1,7 @@
 import obstacles from '../../shared/obstacles.js';
 import { getRandomInt } from '../../shared/utils.js';
 import config from '../../shared/config.js';
-import { CoordPair, Graph, Obstacles } from './types.js';
+import { Coord, CoordPair, Graph, Obstacles, Path } from './types.js';
 
 const { gridCount } = config;
 
@@ -75,7 +75,7 @@ export const getDestinationRange = (coord: number): [number, number] =>
 export const getClosestRoadNode = (
   x: number,
   y: number,
-  graph: Graph
+  graph: Graph = getGraph()
 ): CoordPair => {
   const isValid = (y, x) =>
     y > 0 && y < graph.length - 1 && x > 0 && x < graph[y].length - 1;
@@ -103,7 +103,9 @@ export const getClosestRoadNode = (
         const nextX = x + dx;
 
         if (isValid(nextY, nextX) && !seen.has(`${nextY}:${nextX}`)) {
-          if (graph[nextY][nextX] === 1) return [nextX, nextY];
+          if (graph[nextY][nextX] === 1) {
+            return [nextX, nextY];
+          }
           seen.add(`${nextY}:${nextX}`);
           nextQueue.push([nextY, nextX]);
         }
@@ -114,8 +116,6 @@ export const getClosestRoadNode = (
 };
 
 export const generateDestination = (coordPair: CoordPair): CoordPair => {
-  const graph = getGraph();
-
   const [startX, startY] = coordPair;
   const rangeX = getDestinationRange(startX);
   const rangeY = getDestinationRange(startY);
@@ -123,7 +123,7 @@ export const generateDestination = (coordPair: CoordPair): CoordPair => {
   const destX = getRandomInt(rangeX[0], rangeX[1]);
   const destY = getRandomInt(rangeY[0], rangeY[1]);
 
-  let destination = getClosestRoadNode(destX, destY, graph);
+  let destination = getClosestRoadNode(destX, destY);
 
   return destination;
 };
@@ -135,4 +135,52 @@ export const getStraightLineDistance = (
   const [xA, yA] = coordsA;
   const [xB, yB] = coordsB;
   return Math.sqrt(Math.pow(xB - xA, 2) + Math.pow(yB - yA, 2));
+};
+
+export const getShortestPath = (
+  startingPosition: CoordPair,
+  destination: CoordPair,
+  graph: Graph = getGraph()
+): Path => {
+  const isValid = (y, x) =>
+    y > 0 &&
+    y < graph.length - 1 &&
+    x > 0 &&
+    x < graph[y].length - 1 &&
+    graph[y][x] === 1;
+
+  const directions: [number, number][] = [
+    [1, 0],
+    [-1, 0],
+    [0, 1],
+    [0, -1],
+  ];
+
+  const [col, row]: CoordPair = startingPosition;
+  let queue: [Coord, Coord, CoordPair[]][] = [[row, col, [startingPosition]]];
+  const seen = new Set([`${row}:${col}`]);
+
+  while (queue.length) {
+    const nextQueue = [];
+    for (let i = 0; i < queue.length; i++) {
+      const [row, col, currPath] = queue[i];
+
+      if (row === destination[1] && col === destination[0]) {
+        return currPath;
+      }
+
+      for (let j = 0; j < directions.length; j++) {
+        const [dx, dy]: [number, number] = directions[j];
+
+        const nextRow = row + dy;
+        const nextCol = col + dx;
+
+        if (isValid(nextRow, nextCol) && !seen.has(`${nextRow}:${nextCol}`)) {
+          seen.add(`${nextRow}:${nextCol}`);
+          nextQueue.push([nextRow, nextCol, [...currPath, [nextCol, nextRow]]]);
+        }
+      }
+    }
+    queue = nextQueue;
+  }
 };
