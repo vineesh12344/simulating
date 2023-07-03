@@ -10,6 +10,9 @@ Reference : https://jurajmajerik.com/
 
 1) Clone the repository into your local computer
 2) Make sure you have docker desktop installed
-3) Run docker-compose build
-4) Run docker-compose up -d
-5) Go to http://localhost:8080/
+3) Run docker create volume app-db
+4) Run docker-compose build
+5) Run docker-compose up -d
+6) Run the queries in db folder inside the db container that has been created
+7) Rerun simulation container
+8) Go to http://localhost:8080/
