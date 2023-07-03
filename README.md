@@ -9,5 +9,7 @@ Reference : https://jurajmajerik.com/
 # Instructions to run
 
 1) Clone the repository into your local computer
-2) From the command line run go run main.go
-3) Go to the localhost link provided
+2) Make sure you have docker desktop installed
+3) Run docker-compose build
+4) Run docker-compose up -d
+5) Go to http://localhost:8080/
