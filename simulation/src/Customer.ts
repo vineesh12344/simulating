@@ -1,32 +1,28 @@
 import g from './global.js';
 import { wait, getRandomInt, decide } from '../../shared/utils.js';
 import { CoordPair } from './types.js';
-import { getRoadNodes } from './methods.js';
 import config from '../../shared/config.js';
 
-const { maxActiveCustomers, refreshInterval } = config;
-const roadNodes = getRoadNodes();
+const { maxActiveCustomers } = config;
 
 export default class Customer {
   private busy = false;
 
-  private customerId: string;
-  private name: string;
-  private active = false;
-  private location: CoordPair | null = null;
-  private destination: CoordPair | null = null;
+  public customerId: string;
+  public name: string;
+  public active = false;
+  public location: CoordPair | null = null;
+  public destination: CoordPair | null = null;
   private driverId: string | null = null;
 
   constructor({ customerId, name }: { customerId: string; name: string }) {
     this.customerId = customerId;
     this.name = name;
+
+    this.deactivate = this.deactivate.bind(this);
     this.handleDestinationResult = this.handleDestinationResult.bind(this);
 
     this.simulate();
-  }
-
-  private isNotMatched(): boolean {
-    return this.active && this.destination && !this.driverId;
   }
 
   private async updateDB(): Promise<void> {
@@ -54,53 +50,49 @@ export default class Customer {
     );
   }
 
+  public deactivate(): void {
+    g.activeCustomers.delete(this.customerId);
+
+    this.active = false;
+    this.location = null;
+    this.destination = null;
+    this.driverId = null;
+    this.updateDB();
+  }
+
   private async simulate(): Promise<void> {
+    // Refresh every 200ms
     while (true) {
-      // Active and waiting for the destination
-      if (this.active && !this.destination) {
-        await wait(refreshInterval);
-        continue;
-      }
+      await wait(200);
 
-      // Decide on the new active status
-      let newActive: boolean = this.active;
+      // Only make new decisions if not currently waiting for a result
+      // of an asynchronous operation
+      if (!this.busy) {
+        // Not active, reactivate with some probability
+        if (!this.active) {
+          if (g.activeCustomers.size < maxActiveCustomers) {
+            let newActive = false;
+            newActive = decide(5);
+            if (newActive) {
+              this.active = true;
+              this.updateDB();
+            }
+          }
+        } else if (this.active && !this.location) {
+          // No location yet -> set location, request destination
+          this.busy = true;
 
-      // If inactive, decide if to become active
-      if (!this.active && g.activeCustomers.size < maxActiveCustomers) {
-        newActive = decide(5);
-      }
-
-      // Change of active status
-      if (this.active !== newActive) {
-        this.active = newActive;
-
-        if (newActive) {
-          // Became active -> decide on the destination
-          const location = roadNodes[getRandomInt(0, roadNodes.length - 1)];
+          const location = g.roadNodes[getRandomInt(0, g.roadNodes.length - 1)];
           this.location = location;
-
           g.activeCustomers.set(this.customerId, location);
 
           g.getDestination.send({
             customerId: this.customerId,
-            location,
+            location: this.location,
           });
-        } else {
-          // Just became inactive -> clear state
-          g.activeCustomers.delete(this.customerId);
-
-          this.active = false;
-          this.location = null;
-          this.destination = null;
-          this.updateDB();
-        }
-      }
-
-      if (!this.busy) {
-        // Match with a driver
-        if (this.isNotMatched()) {
+        } else if (this.active && !this.driverId) {
+          // Match with a driver
           this.busy = true;
-
           g.dispatcher.send({
             from: 'customer',
             data: {
@@ -111,13 +103,12 @@ export default class Customer {
           });
         }
       }
-
-      await wait(refreshInterval);
     }
   }
 
   public handleDestinationResult(destination: CoordPair): void {
     this.destination = destination;
+    this.busy = false;
     this.updateDB();
   }
 

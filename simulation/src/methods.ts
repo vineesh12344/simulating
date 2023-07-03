@@ -1,7 +1,8 @@
 import obstacles from '../../shared/obstacles.js';
 import { getRandomInt } from '../../shared/utils.js';
 import config from '../../shared/config.js';
-import { Coord, CoordPair, Graph, Obstacles, Path } from './types.js';
+import { getObstaclesMap } from '../../shared/methods.js';
+import { Coord, CoordPair, Graph, Path } from './types.js';
 
 const { gridCount } = config;
 
@@ -10,30 +11,13 @@ interface Cache {
 }
 const cache: Cache = { graph: null };
 
-export const getObstaclesSet = (obstacles: Obstacles): Set<string> => {
-  const obstaclesSet = new Set<string>();
-  obstacles.forEach(([xStart, xEnd, yStart, yEnd]) => {
-    let x = xStart;
-    while (x <= xEnd) {
-      let y = yStart;
-      while (y <= yEnd) {
-        obstaclesSet.add(`${x}:${y}`);
-        y += 1;
-      }
-      x += 1;
-    }
-  });
-
-  return obstaclesSet;
-};
-
 export const getRoadNodes = (): CoordPair[] => {
-  const obstaclesSet = getObstaclesSet(obstacles);
+  const obstaclesMap = getObstaclesMap(obstacles);
 
   const roadNodes: CoordPair[] = [];
   for (let x = 0; x < gridCount; x++) {
     for (let y = 0; y < gridCount; y++) {
-      if (!obstaclesSet.has(`${x}:${y}`)) {
+      if (!obstaclesMap.get(`${x}:${y}`)) {
         roadNodes.push([x, y]);
       }
     }
@@ -45,7 +29,7 @@ export const getRoadNodes = (): CoordPair[] => {
 };
 
 export const buildGraph = (
-  obstaclesSet: Set<string>,
+  obstaclesMap: Map<string, string>,
   gridCount: number
 ): Graph => {
   const graph: Graph = [];
@@ -53,7 +37,7 @@ export const buildGraph = (
     graph[y] = [];
 
     for (let x = 0; x < gridCount; x++) {
-      if (obstaclesSet.has(`${x}:${y}`)) graph[y][x] = 0;
+      if (obstaclesMap.get(`${x}:${y}`)) graph[y][x] = 0;
       else graph[y][x] = 1;
     }
   }
@@ -63,7 +47,7 @@ export const buildGraph = (
 
 export const getGraph = (): Graph => {
   if (cache.graph) return cache.graph;
-  cache.graph = buildGraph(getObstaclesSet(obstacles), gridCount);
+  cache.graph = buildGraph(getObstaclesMap(obstacles), gridCount);
   return cache.graph;
 };
 
@@ -78,7 +62,7 @@ export const getClosestRoadNode = (
   graph: Graph = getGraph()
 ): CoordPair => {
   const isValid = (y, x) =>
-    y > 0 && y < graph.length - 1 && x > 0 && x < graph[y].length - 1;
+    y >= 0 && y < graph.length && x >= 0 && x < graph[y].length;
 
   if (isValid(y, x) && graph[y][x] === 1) return [x, y];
 
@@ -143,10 +127,10 @@ export const getShortestPath = (
   graph: Graph = getGraph()
 ): Path => {
   const isValid = (y, x) =>
-    y > 0 &&
-    y < graph.length - 1 &&
-    x > 0 &&
-    x < graph[y].length - 1 &&
+    y >= 0 &&
+    y < graph.length &&
+    x >= 0 &&
+    x < graph[y].length &&
     graph[y][x] === 1;
 
   const directions: [number, number][] = [

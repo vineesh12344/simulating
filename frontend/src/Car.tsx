@@ -19,6 +19,7 @@ const {
 } = config;
 
 interface Props {
+  driverId: string;
   path: [number, number][];
   actual: [number, number];
 }
@@ -26,7 +27,6 @@ interface Props {
 interface State {
   position: [number, number];
   rotation: number;
-  path: [number, number][];
 }
 
 export default class Car extends React.Component<Props, State> {
@@ -38,17 +38,18 @@ export default class Car extends React.Component<Props, State> {
     super(props);
     const { path, actual } = props;
 
-    let pathIndex = path.findIndex(([x, y]) => {
-      return x === actual[0] && y === actual[1];
-    });
-    if (pathIndex === 0) pathIndex = 1;
-
-    const rotation: number = getRotation(path, pathIndex);
+    let rotation = 0;
+    if (path.length > 1) {
+      let pathIndex = path.findIndex(([x, y]) => {
+        return x === actual[0] && y === actual[1];
+      });
+      if (pathIndex === 0) pathIndex = 1;
+      rotation = getRotation(path, pathIndex);
+    }
 
     this.state = {
       position: actual,
       rotation,
-      path,
     };
   }
 
@@ -125,13 +126,15 @@ export default class Car extends React.Component<Props, State> {
       const [nextX, nextY] = section[i];
       while (currX !== nextX) {
         currX = advanceCoord(currX, nextX, increment);
-        this.setState({ position: [currX, this.state.position[1]], path });
+
+        this.setState({ position: [currX, this.state.position[1]] });
         await wait(refreshInterval);
       }
 
       while (currY !== nextY) {
         currY = advanceCoord(currY, nextY, increment);
-        this.setState({ position: [this.state.position[0], currY], path });
+
+        this.setState({ position: [this.state.position[0], currY] });
         await wait(refreshInterval);
       }
     }
@@ -151,10 +154,11 @@ export default class Car extends React.Component<Props, State> {
     const { position, rotation } = this.state;
 
     const [x, y] = position;
+
     return (
       <CarIcon
-        x={parseFloat((x * squareSize - 20).toFixed(2))}
-        y={parseFloat((y * squareSize - 20).toFixed(2))}
+        x={parseFloat((x * squareSize - 22).toFixed(2))}
+        y={parseFloat((y * squareSize - 22).toFixed(2))}
         rotation={rotation}
       />
     );
