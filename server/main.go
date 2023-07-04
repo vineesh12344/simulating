@@ -10,14 +10,15 @@ import (
 )
 
 type Driver struct {
-	Id       string `json:"id"`
-	DriverId string `json:"driverId"`
-	Name        string `json:"name"`
-	Status 		  string `json:"status"`
-	Location string `json:"location"`
-	Path     string `json:"path"`
-	PathIndex int `json:"pathIndex"`
+	Id         string `json:"id"`
+	DriverId   string `json:"driverId"`
+	Name       string `json:"name"`
+	Status     string `json:"status"`
+	Location   string `json:"location"`
+	Path       string `json:"path"`
+	PathIndex  int    `json:"pathIndex"`
 	CustomerId string `json:"customerId"`
+	CustomerName string `json:"customerName"`
 }
 
 type Customer struct {
@@ -30,7 +31,10 @@ type Customer struct {
 	DriverId    string `json:"driverId"`
 }
 
-func getDrivers(w http.ResponseWriter, req *http.Request) {
+func driversHandler(w http.ResponseWriter, req *http.Request) {
+	// set cors for specific origin
+	w.Header().Set("Access-Control-Allow-Origin", "http://localhost:3000")
+
 	rows, err := db.Connection.Query(`
 		SELECT
 			id,
@@ -40,7 +44,8 @@ func getDrivers(w http.ResponseWriter, req *http.Request) {
 			location,
 			path,
 			path_index,
-			customer_id 
+			customer_id,
+			customer_name 
 		FROM drivers
 		`,
 	)
@@ -63,6 +68,7 @@ func getDrivers(w http.ResponseWriter, req *http.Request) {
 			&driver.Path,
 			&driver.PathIndex,
 			&driver.CustomerId,
+			&driver.CustomerName,
 		)
 		drivers = append(drivers, driver)
 	}
@@ -73,7 +79,10 @@ func getDrivers(w http.ResponseWriter, req *http.Request) {
 	w.Write(ridesBytes)
 }
 
-func getCustomers(w http.ResponseWriter, req *http.Request) {
+func customersHandler(w http.ResponseWriter, req *http.Request) {
+	// set cors for specific origin
+	w.Header().Set("Access-Control-Allow-Origin", "http://localhost:3000")
+
 	rows, err := db.Connection.Query(`
 		SELECT 
 			id, 
@@ -83,7 +92,10 @@ func getCustomers(w http.ResponseWriter, req *http.Request) {
 			location, 
 			destination, 
 			driver_id 
-		FROM customers where active = true
+		FROM customers WHERE
+		active = true AND 
+		driver_id IS NULL AND 
+		(location IS NOT NULL AND location != 'null') 
 		`,
 	)
 	if err != nil {
@@ -119,8 +131,8 @@ func main() {
 	defer db.Connection.Close()
 
 	http.Handle("/", http.FileServer(http.Dir("../frontend/build")))
-	http.HandleFunc("/drivers", getDrivers)
-	http.HandleFunc("/customers", getCustomers)
+	http.HandleFunc("/api/drivers", driversHandler)
+	http.HandleFunc("/api/customers", customersHandler)
 
 	serverEnv := os.Getenv("SERVER_ENV")
 

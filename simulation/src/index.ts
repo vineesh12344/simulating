@@ -1,5 +1,4 @@
 import g from './global.js';
-import Customer from './Customer.js';
 import { CoordPair, Path } from './types.js';
 
 const main = async () => {
@@ -35,14 +34,20 @@ const main = async () => {
     ({
       customerId,
       driverId,
+      customerName,
       location,
     }: {
       customerId: string;
       driverId: string;
+      customerName: string;
       location: CoordPair;
     }) => {
       customerInstances[customerId].handleDispatcherResult(driverId);
-      driverInstances[driverId].handleDispatcherResult(customerId, location);
+      driverInstances[driverId].handleDispatcherResult(
+        customerId,
+        customerName,
+        location
+      );
     }
   );
 
