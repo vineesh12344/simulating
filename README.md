@@ -14,8 +14,15 @@ Reference : https://jurajmajerik.com/
 4) Run docker-compose build
 5) Run docker-compose up -d
 6) Run the queries in db folder inside the db container that has been created
-7) Rerun simulation container
-8) Go to http://localhost:8080/
+
+      Run psql -U postgres
+      CREATE TABLE customers (id SERIAL PRIMARY KEY, customer_id uuid UNIQUE, name VARCHAR(255) NOT NULL, active BOOLEAN, location VARCHAR(5) NOT NULL, destination VARCHAR(5) NOT NULL, driver_id uuid UNIQUE);
+      CREATE TYPE status_enum AS ENUM ('idle', 'pickup', 'enroute');
+      CREATE TABLE drivers (id SERIAL PRIMARY KEY, driver_id uuid UNIQUE, name VARCHAR(255) NOT NULL, status status_enum NOT NULL, location VARCHAR(5) NOT NULL, path TEXT, path_index INTEGER, customer_id uuid UNIQUE, customer_name VARCHAR(255));
+      /dt to check if tables are created
+   
+8) Rerun simulation container
+9) Go to http://localhost:8080/
 
 # Upon making any changes to frontend
 
